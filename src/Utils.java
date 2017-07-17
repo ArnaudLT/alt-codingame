@@ -4,6 +4,14 @@ public class Utils {
 
     static final Random rnd = new Random(777);
 
+    static double min(double a, double b) {
+        return (a <= b) ? a : b;
+    }
+
+    static double max(double a, double b) {
+        return (a >= b) ? a : b;
+    }
+
     // ================================================
     //                    ARRAYS
     // ================================================
