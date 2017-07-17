@@ -1,22 +1,26 @@
 
 public class MinMaxUtils {
 
-    static class MinMax {
+    static class MinMax<T extends World<M>, M extends Move> {
 
-        World world;
-        int maxDeph;
+        T world;
+        int maxDepth;
 
 
-        MinMax(World world, int maxDeph) {
+        MinMax(T world, int maxDepth) {
             this.world = world;
-            this.maxDeph = maxDeph;
+            this.maxDepth = maxDepth;
         }
 
-        Move run() {
-            Move bestMove = null;
-            double maxVal = Double.MIN_VALUE;
+        /**
+         * I'm the Max player (pid=1), the opponent is the Min player (pid=-1)
+         * @return
+         */
+        M run() {
+            M bestMove = null;
+            double maxVal = Double.NEGATIVE_INFINITY;
             double val;
-            AltArray<Move> allMoves = this.world.possibleMoves();
+            AltArray<M> allMoves = this.world.possibleMoves(1);
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
                 val = min(1);
@@ -29,16 +33,16 @@ public class MinMaxUtils {
             return bestMove;
         }
 
-        double min(int currentDeph) {
-            if (currentDeph > this.maxDeph || this.world.isOver()) {
+        double min(int currentDepth) {
+            if (currentDepth > this.maxDepth || this.world.isOver()) {
                 return world.evaluate();
             }
             double minVal = Double.MAX_VALUE;
             double val;
-            AltArray<Move> allMoves = this.world.possibleMoves();
+            AltArray<M> allMoves = this.world.possibleMoves(-1);
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
-                val = max(currentDeph+1);
+                val = max(currentDepth+1);
                 if (val < minVal) {
                     minVal = val;
                 }
@@ -47,16 +51,16 @@ public class MinMaxUtils {
             return minVal;
         }
 
-        double max(int currentDeph) {
-            if (currentDeph > this.maxDeph || this.world.isOver()) {
+        double max(int currentDepth) {
+            if (currentDepth > this.maxDepth || this.world.isOver()) {
                 return world.evaluate();
             }
-            double maxVal = Double.MIN_VALUE;
+            double maxVal = Double.NEGATIVE_INFINITY;
             double val;
-            AltArray<Move> allMoves = this.world.possibleMoves();
+            AltArray<M> allMoves = this.world.possibleMoves(1);
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
-                val = min(currentDeph+1);
+                val = min(currentDepth+1);
                 if (val > maxVal) {
                     maxVal = val;
                 }
@@ -65,22 +69,19 @@ public class MinMaxUtils {
             return maxVal;
         }
 
-
     }
 
 
-    interface World {
-        void apply(Move m);
-        void cancel(Move m);
-        AltArray<Move> possibleMoves();
+    interface World<M extends Move> {
+        void apply(M m);
+        void cancel(M m);
+        AltArray<M> possibleMoves(int playerId);
         double evaluate();
         boolean isOver();
     }
 
     interface Move {
     }
-
-
 
 
 }
