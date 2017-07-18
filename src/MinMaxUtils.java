@@ -24,11 +24,11 @@ public class MinMaxUtils {
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
                 val = min(1);
+                this.world.cancel(allMoves.get(i));
                 if (val > maxVal) {
                     maxVal = val;
                     bestMove = allMoves.get(i);
-                }
-                this.world.cancel(allMoves.get(i));
+                }           
             }
             return bestMove;
         }
@@ -43,10 +43,10 @@ public class MinMaxUtils {
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
                 val = max(currentDepth+1);
+                this.world.cancel(allMoves.get(i));
                 if (val < minVal) {
                     minVal = val;
-                }
-                this.world.cancel(allMoves.get(i));
+                }                
             }
             return minVal;
         }
@@ -61,10 +61,10 @@ public class MinMaxUtils {
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
                 val = min(currentDepth+1);
+                this.world.cancel(allMoves.get(i));
                 if (val > maxVal) {
                     maxVal = val;
                 }
-                this.world.cancel(allMoves.get(i));
             }
             return maxVal;
         }
@@ -79,9 +79,9 @@ public class MinMaxUtils {
         double evaluate();
         boolean isOver();
     }
+    
 
     interface Move {
     }
-
 
 }
