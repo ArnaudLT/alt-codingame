@@ -6,7 +6,6 @@ public class AlphaBetaUtils {
         T world;
         int maxDepth;
 
-
         AlphaBeta(T world, int maxDepth) {
             this.world = world;
             this.maxDepth = maxDepth;
@@ -25,11 +24,11 @@ public class AlphaBetaUtils {
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
                 val = min(1, Double.NEGATIVE_INFINITY, Double.MAX_VALUE);
+                this.world.cancel(allMoves.get(i));
                 if (val > maxVal) {
                     maxVal = val;
                     bestMove = allMoves.get(i);
                 }
-                this.world.cancel(allMoves.get(i));
             }
             return bestMove;
         }
@@ -44,11 +43,11 @@ public class AlphaBetaUtils {
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
                 minVal = Utils.min(minVal,max(currentDepth+1, alpha, beta));
+                this.world.cancel(allMoves.get(i));
                 if (minVal <= alpha) {
                     return minVal;
                 }
                 beta = Utils.min(beta, minVal);
-                this.world.cancel(allMoves.get(i));
             }
             return minVal;
         }
@@ -63,11 +62,11 @@ public class AlphaBetaUtils {
             for (int i=0; i<allMoves.size; i++) {
                 this.world.apply(allMoves.get(i));
                 maxVal = Utils.max(maxVal,min(currentDepth+1, alpha, beta));
+                this.world.cancel(allMoves.get(i));
                 if (maxVal >= beta) {
                     return maxVal;
                 }
                 alpha = Utils.max(alpha, maxVal);
-                this.world.cancel(allMoves.get(i));
             }
             return maxVal;
         }
