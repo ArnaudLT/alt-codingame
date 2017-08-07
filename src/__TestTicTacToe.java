@@ -1,19 +1,14 @@
-package main;
-
 import java.util.Scanner;
-import main.Algorithms.AlphaBeta;
-import main.Algorithms.MinMax;
-import main.Algorithms.Move;
-import main.Algorithms.World;
 
-public class Tests {
+
+public class __TestTicTacToe {
 
     public static void main(String[] argv) {
-        TicTacToe t = new TicTacToe();
+        TicTacToe game = new TicTacToe();
         Scanner scan = new Scanner(System.in);
 
-        AlphaBeta<TicTacToe,Draw> mm = new AlphaBeta<>(t,8);
-        t.print();
+        TreeSearch.AlphaBeta<TicTacToe,Draw> mm = new TreeSearch.AlphaBeta<>(game,8);
+        game.print();
         do {
             /* HUMAN TURN */
             boolean valid;
@@ -24,29 +19,30 @@ public class Tests {
                 x = scan.nextInt();
                 System.out.print("line : ");
                 y = scan.nextInt();
-                if (!(x >= 0 && x < 3 && y >= 0 && y < 3 && t.board[x][y] == 0)) {
-                    valid = false;
-                } else {
-                    valid = true;
-                }
+                valid = game.isValid(x,y);
             } while (!valid);
-            t.apply(new Draw(-1,x,y));
-            t.print();
-            if (t.isOver()) break;
+            game.apply(new Draw(-1,x,y));
+            game.print();
+            if (game.isOver()) break;
 
             /* MINMAX TURN */
-            System.out.println(" _____ MinMax' turn (X) _____");
             Draw d = mm.run();
+            game.apply(d);
+            System.out.println(" _____ MinMax' turn (X) _____");
             System.out.println("Computer play : x="+d.x+" y="+d.y);
-            t.apply(d);
-            t.print();
+            game.print();
 
-        } while (!t.isOver());
+        } while (!game.isOver());
 
     }
 
+    public static void clearScreen() {
+        for (int i=0;i<50;i++) {
+            System.out.println();
+        }
+    }
 
-    static class TicTacToe implements World<Draw> {
+    static class TicTacToe implements TreeSearch.World<Draw> {
 
         int[][] board = new int[3][3];
 
@@ -111,6 +107,16 @@ public class Tests {
             return true;
         }
 
+        boolean isValid(int x, int y) {
+            boolean valid;
+            if (!(x >= 0 && x < 3 && y >= 0 && y < 3 && board[x][y] == 0)) {
+                valid = false;
+            } else {
+                valid = true;
+            }
+            return valid;
+        }
+
         int playerWinOnLine(int line) {
             int pid = board[0][line];
             for (int i=1;i<3;i++) {
@@ -160,7 +166,7 @@ public class Tests {
         }
     }
 
-    static class Draw implements Move {
+    static class Draw implements TreeSearch.Move {
 
         int player;
         int x;
