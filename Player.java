@@ -67,9 +67,6 @@ class Player {
                         Owner.values()[owner + 1],
                         UnitType.values()[unitType + 1],
                         health));
-                if (world.turnCount == 1 && health < 36) {
-                    world.blitzGame = true;
-                }
                 //System.err.println("UPDATE UNIT -> "+world.units[i]);
             }
 
@@ -101,7 +98,6 @@ class Player {
 
         Action firstAction;
         Action secondAction;
-        boolean blitzGame; // game start with less than 36hp.
 
 
         World(int numSites) {
@@ -127,6 +123,9 @@ class Player {
                 this.sites[siteId].creepType = CreepType.values()[param2 + 1];
             } else if (structureType == StructureType.MINE) {
                 this.sites[siteId].incomeRate = (param1 != -1) ? param1 : 3; // approx pour enemy
+            }
+            if ((siteId == 2)) {
+                System.err.println(this.sites[2]);
             }
         }
 
@@ -171,7 +170,7 @@ class Player {
 
         static final int STARTER_NB_MINES = 2;
         static final int STARTER_NB_BARRACKS = 1;
-        static final int STARTER_NB_TOWERS = 1;
+        static final int STARTER_NB_TOWERS = 2;
         static final int STARTER_MIN_HP_TOWER = 700;
 
         static final int MIDDLE_MIN_HP_TOWER = 700;
@@ -196,17 +195,10 @@ class Player {
             if (!isStarterFinished) {
 
                 System.err.println(" STARTER ");
-                if (blitzGame) {
-                    isStarterFinished = starterBlitz(STARTER_NB_MINES,
-                            STARTER_NB_BARRACKS,
-                            STARTER_NB_TOWERS,
-                            STARTER_MIN_HP_TOWER, nearestEnemy);
-                } else {
-                    isStarterFinished = starter(STARTER_NB_MINES,
-                            STARTER_NB_BARRACKS,
-                            STARTER_NB_TOWERS,
-                            STARTER_MIN_HP_TOWER, nearestEnemy);
-                }
+                isStarterFinished = starter(STARTER_NB_MINES,
+                        STARTER_NB_BARRACKS,
+                        STARTER_NB_TOWERS,
+                        STARTER_MIN_HP_TOWER, nearestEnemy);
             } else {
 
                 // MID (+ END)
@@ -229,21 +221,7 @@ class Player {
                         this.firstAction = new BuildTower(touchedSite);
                         this.lastTarget = this.sites[touchedSite];
                     } else {
-
-                        long enemyAroundFriendlyQueen = Arrays.stream(this.units)
-                                .filter(u -> u.distanceToFriendlyQueen < 60)
-                                .count();
-
-                        if (enemyAroundFriendlyQueen > 1) {
-
-                                System.err.println("HERE 1 "+nearestEmpty);
-                                this.firstAction = new BuildTower(nearestEmpty.siteId);
-                                lastTarget = nearestEmpty;
-
-                        } else {
-                            this.firstAction = new Move(xEscapeEnemy(nearestEnemy.x), yEscapeEnemy(nearestEnemy.y));
-                        }
-
+                        this.firstAction = new Move(xEscapeEnemy(nearestEnemy.x), yEscapeEnemy(nearestEnemy.y));
                     }
 
                 } else if (lastTarget != null && lastTarget.type == StructureType.TOWER &&
@@ -309,19 +287,7 @@ class Player {
 
             prepareBigBerta = (this.turnCount < 150) &&
                     (this.enemyQueen.health > this.friendlyQueen.health) &&
-                    (this.statistics.friendlyIncomeRate > 0)
-            ;
-
-            System.err.println("Prepare = " + prepareBigBerta);
-
-            long enemyUnitOount = Arrays.stream(this.units)
-                    .filter(u -> u.owner == Owner.ENEMY)
-                    .filter(u -> u.unitType == UnitType.KNIGHT)
-                    .count();
-
-            if (enemyUnitOount > 8 && friendlyQueen.health < 20) {
-                prepareBigBerta = false;
-            }
+                    (this.statistics.friendlyIncomeRate > 0);
 
             System.err.println("Prepare = " + prepareBigBerta);
 
@@ -346,68 +312,32 @@ class Player {
 
         }
 
-        boolean starterBlitz(int nbMines, int nbBarracks, int nbTowers, int minHpTower, Unit nearestEnemy) {
-
-            if (lastTarget != null && lastTarget.type == StructureType.MINE && lastTarget.incomeRate < lastTarget.maximumMineSize) {
-
-                // Mine en évolution
-                this.firstAction = new BuildMine(lastTarget.siteId);
-            } else if (this.statistics.friendlyMines < 1) {
-
-                // Nouvelle mine
-                if (nearestEmptyWithGold != null) {
-                    System.err.println("nearestEmptyWithGold=" + nearestEmptyWithGold);
-                    this.firstAction = new BuildMine(nearestEmptyWithGold.siteId);
-                    lastTarget = nearestEmptyWithGold;
-                } else {
-                    System.err.println("nearestEmpty=" + nearestEmpty);
-                    this.firstAction = new BuildMine(nearestEmpty.siteId);
-                    lastTarget = nearestEmpty;
-                }
-            } else if (this.statistics.friendlyBarracksKnights < nbBarracks) {
-
-                // Barracks Knight a construire
-                //this.firstAction = new BuildBarracks(nearestEmpty.siteId, CreepType.KNIGHT);
-                //lastTarget = nearestEmpty;
-                if (this.statistics.enemyBarracksKnights == 0) {
-                    int xCenter = 960;
-                    int yCenter = 500;
-                    BuildingSite idealBarracks = Arrays.stream(this.sites)
-                            .filter(s -> s.owner == Owner.NONE)
-                            .sorted(Comparator.comparingDouble(s -> distance(s, xCenter, yCenter)))
-                            .limit(4)
-                            .min(Comparator.comparingDouble(s -> s.distanceToFriendlyQueen))
-                            .get();
-                    this.firstAction = new BuildBarracks(idealBarracks.siteId, CreepType.KNIGHT);
-                    lastTarget = idealBarracks;
-                } else {
-                    this.firstAction = new BuildBarracks(nearestEmpty.siteId, CreepType.KNIGHT);
-                    lastTarget = nearestEmpty;
-                }
-
-            } else if (lastTarget != null && lastTarget.type == StructureType.TOWER && lastTarget.health < minHpTower ) {
-
-                // Tour en évolution
-                this.firstAction = new BuildTower(lastTarget.siteId);
-            } else if (this.statistics.friendlyTowers < nbTowers) {
-
-                this.firstAction = new BuildTower(nearestEmpty.siteId);
-                lastTarget = nearestEmpty;
-            } else {
-                System.err.println("lastTarget = " + lastTarget);
-                System.err.println(">>> BUG START <<<");
-                return true;
-            }
-
-            return this.statistics.friendlyTowers >= nbTowers && lastTarget.health + 96 >= minHpTower;
-
-        }
-
 
         //  'nbMines' mines max / 'nbBarracks' barracks / 'nbTowers' tours with at least 'minHpTower'
         boolean starter(int nbMines, int nbBarracks, int nbTowers, int minHpTower, Unit nearestEnemy) {
 
-            if (lastTarget != null && lastTarget.type == StructureType.MINE && lastTarget.incomeRate < lastTarget.maximumMineSize) {
+            if (nearestEnemy != null && nearestEnemy.distanceToFriendlyQueen < 375 && friendlyQueen.health < 35) {
+
+                BuildingSite nearestTower = Arrays.stream(this.sites)
+                        .filter(s -> s.type == StructureType.TOWER)
+                        .filter(s -> s.owner == Owner.FRIENDLY)
+                        .min(Comparator.comparingDouble(s -> s.distanceToFriendlyQueen))
+                        .orElse(null);
+
+                if (nearestTower != null && nearestEnemy.distanceToFriendlyQueen > 60) {
+                    System.err.println("Turn around = " + nearestTower);
+                    this.firstAction = new Move(xEscapeEnemyTower(nearestEnemy.x, nearestTower), yEscapeEnemyTower(nearestEnemy.y, nearestTower));
+                } else if (touchedSite != -1 && this.sites[touchedSite].type == StructureType.NONE) {
+                    this.firstAction = new BuildTower(touchedSite);
+                    this.lastTarget = this.sites[touchedSite];
+                } else if (nearestEmpty != null) {
+                    this.firstAction = new BuildTower(nearestEmpty.siteId);
+                    this.lastTarget = nearestEmpty;
+                }else {
+                    this.firstAction = new Move(xEscapeEnemy(nearestEnemy.x), yEscapeEnemy(nearestEnemy.y));
+                }
+
+            } else if (lastTarget != null && lastTarget.type == StructureType.MINE && lastTarget.incomeRate < lastTarget.maximumMineSize) {
 
                 // Mine en évolution
                 this.firstAction = new BuildMine(lastTarget.siteId);
